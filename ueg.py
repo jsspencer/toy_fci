@@ -111,7 +111,6 @@ def slt_cnd0(sys, det):
 
     return hmatel
 
-
 def slt_cnd2(sys, det1, det2):
 
     # Get excitation.
@@ -148,6 +147,45 @@ def slt_cnd2(sys, det1, det2):
 
     return hmatel
 
+#--- Permanent matrix elements ---
+
+def slt_cnd_perm0(sys, det):
+
+    hmatel = 0
+    for (indx, bi) in enumerate(det):
+        hmatel += bi.kinetic
+        for bj in det[indx+1:]:
+            if bi.spin == bj.spin:
+                hmatel += sys.coulomb_int(bi.kp - bj.kp)
+                pass
+
+    return hmatel
+
+def slt_cnd_perm2(sys, det1, det2):
+
+    # Get excitation.
+    from_1 = []
+    to_2 = []
+    for (indx, basis) in enumerate(det1):
+        if basis not in det2:
+            from_1.append(basis)
+    for (indx, basis) in enumerate(det2):
+        if basis not in det1:
+            to_2.append(basis)
+
+    hmatel = 0
+    if len(from_1) == 2:
+        if all(total_momentum(from_1) == total_momentum(to_2)):
+            if from_1[0].spin == to_2[0].spin and from_1[1].spin == to_2[1].spin:
+                # Coulomb
+                hmatel += sys.coulomb_int(from_1[0].kp - to_2[0].kp)
+            if from_1[0].spin == to_2[1].spin and from_1[1].spin == to_2[0].spin:
+                # Exchange
+                hmatel += sys.coulomb_int(from_1[0].kp - to_2[1].kp)
+    return hmatel
+
+#--- Construct Hamiltonian ---
+
 def create_hamiltonian(sys, basis, mat_fn0, mat_fn2):
 
     nbasis = len(basis)
@@ -159,9 +197,45 @@ def create_hamiltonian(sys, basis, mat_fn0, mat_fn2):
         for j in range(i+1, nbasis):
             bj = basis[j]
             hamil[i][j] = mat_fn2(sys, bi, bj)
-            hamil[j][i] = hamil[i,j]
+            hamil[j][i] = hamil[i][j]
 
     return hamil
+
+def convert_offdiagonal_elements(matrix):
+
+    abs_matrix = matrix
+    ndim = matrix.shape[0]
+    for i in range(ndim):
+        for j in range(i+1,ndim):
+            abs_matrix[i][j] = -abs(abs_matrix[i][j])
+            abs_matrix[j][i] = -abs(abs_matrix[j][i])
+
+    return abs_matrix
+
+def convert_diagonal_elements(matrix):
+
+    abs_matrix = matrix
+    ndim = matrix.shape[0]
+    for i in range(ndim):
+        abs_matrix[i][i] = -abs(abs_matrix[i][i])
+
+    return abs_matrix
+
+def worker(label, sys, basis, mat_fn0, mat_fn2, nprint):
+
+    print("Constructing <%s'|H|%s>..." % (2*(label,)))
+    hamil = create_hamiltonian(sys, basis, mat_fn0, mat_fn2)
+    print("Diagonalising <%s'|H|%s>..." % (2*(label,)))
+    eigval = numpy.linalg.eigvalsh(hamil)
+    print(eigval[:nprint])
+    print("Diagonalising -|<%s'|H|%s>|, |%s'> /= |%s>..." % (4*(label,)))
+    hamil = convert_offdiagonal_elements(hamil)
+    eigval = numpy.linalg.eigvalsh(hamil)
+    print(eigval[:nprint])
+    print("Diagonalising -|<%s'|H|%s>|..." % (2*(label,)))
+    hamil = convert_diagonal_elements(hamil)
+    eigval = numpy.linalg.eigvalsh(hamil)
+    print(eigval[:nprint])
 
 if __name__ == '__main__':
 
@@ -174,8 +248,10 @@ if __name__ == '__main__':
     gamma = numpy.zeros(3)
 
     sys = UEG(nel, nalpha, nbeta, rs)
+    print('Constructing the basis...')
     (basis_fns, hartree_products, determinants) = init_basis(sys, cutoff, gamma)
+    print('Basis size:', len(determinants), len(hartree_products))
 
-    hamil = create_hamiltonian(sys, determinants, slt_cnd0, slt_cnd2)
-    eigval = numpy.linalg.eigvalsh(hamil)
-    print(eigval[0])
+    worker('D', sys, determinants, slt_cnd0, slt_cnd2, 10)
+    worker('P', sys, determinants, slt_cnd_perm0, slt_cnd_perm2, 10)
+    worker('h', sys, hartree_products, hartree0, hartree2, 100)
