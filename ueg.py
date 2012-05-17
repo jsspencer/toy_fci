@@ -70,13 +70,37 @@ def init_basis(sys, cutoff, sym):
 
 #--- Hartree product matrix elements ---
 
+def hartree0(sys, prod):
+
+    hmatel = 0
+    for (indx, bi) in enumerate(prod):
+        hmatel += bi.kinetic
+    return hmatel
+
+def hartree2(sys, prod1, prod2):
+
+    from_1 = []
+    to_2 = []
+    for i in range(len(prod1)):
+        if prod1[i] != prod2[i]:
+            from_1.append(prod1[i])
+            to_2.append(prod2[i])
+
+    hmatel = 0
+    if len(from_1) == 2:
+        if from_1[0].spin == to_2[0].spin and from_1[1].spin == to_2[1].spin:
+            # Coulomb
+            hmatel = sys.coulomb_int(from_1[0].kp - to_2[0].kp)
+
+    return hmatel
+
 def create_fq_hamiltonian(hartree_products):
     pass
 
 #--- Determinant matrix elements ---
 
 def slt_cnd0(sys, det):
-    
+
     hmatel = 0
     for (indx, bi) in enumerate(det):
         hmatel += bi.kinetic
