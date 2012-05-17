@@ -148,17 +148,17 @@ def slt_cnd2(sys, det1, det2):
 
     return hmatel
 
-def create_sq_hamiltonian(sys, determinants):
+def create_hamiltonian(sys, basis, mat_fn0, mat_fn2):
 
-    ndets = len(determinants)
-    hamil = numpy.zeros([ndets, ndets])
+    nbasis = len(basis)
+    hamil = numpy.zeros([nbasis, nbasis])
 
-    for i in range(len(determinants)):
-        di = determinants[i]
-        hamil[i][i] = slt_cnd0(sys, di)
-        for j in range(i+1, len(determinants)):
-            dj = determinants[j]
-            hamil[i][j] = slt_cnd2(sys, di, dj)
+    for i in range(nbasis):
+        bi = basis[i]
+        hamil[i][i] = mat_fn0(sys, bi)
+        for j in range(i+1, nbasis):
+            bj = basis[j]
+            hamil[i][j] = mat_fn2(sys, bi, bj)
             hamil[j][i] = hamil[i,j]
 
     return hamil
@@ -176,6 +176,6 @@ if __name__ == '__main__':
     sys = UEG(nel, nalpha, nbeta, rs)
     (basis_fns, hartree_products, determinants) = init_basis(sys, cutoff, gamma)
 
-    hamil = create_sq_hamiltonian(sys, determinants)
+    hamil = create_hamiltonian(sys, determinants, slt_cnd0, slt_cnd2)
     eigval = numpy.linalg.eigvalsh(hamil)
     print(eigval[0])
