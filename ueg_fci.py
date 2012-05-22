@@ -7,7 +7,16 @@ calculations, in particular for investigating ideas about the sign problem
 in the Full Configuration Interaction Quantum Monte Carlo method discussed by
 Spencer, Blunt and Foulkes (J. Chem. Phys. 136, 054110 (2012); arXiv:1110.5479).
 
+FCI calculations can be performed in a Slater determinant, permanent or Hartree
+product basis.
+
 Note that no attempt is made to tackle finite size effects.
+
+.. warning::
+
+    The Hartree product basis set is much larger than the determinant/permanent
+    basis set, even for tiny systems.  Thus the system sizes which can be
+    tackled using the Hartree product basis are far more limited.
 '''
 
 # copyright (c) 2012 James Spencer, Imperial College London.
@@ -43,15 +52,15 @@ import pprint
 #--- Basis functions ---
 
 class BasisFn:
-    def __init__(self, i, j, k, L, spin):
-        '''Create a basis function with wavevector 2*pi*(i,j,k)/L of the desired spin.
+    '''Basis function with wavevector 2*pi*(i,j,k)/L of the desired spin.
 
-In:
+TODO: maths
 
-i, j, k: integer labels (quantum numbers) of the wavevector
-L: dimension of the cubic simulation cell of size LxLxL
-spin: spin of the basis function (-1 for a down electron, +1 for an up electron)
+:param integer i, j, k: integer labels (quantum numbers) of the wavevector
+:param float L: dimension of the cubic simulation cell of size LxLxL
+:param integer spin: spin of the basis function (-1 for a down electron, +1 for an up electron)
 '''
+    def __init__(self, i, j, k, L, spin):
         self.k = numpy.array([x for x in (i,j,k)])
         self.L = L
         self.kp = (self.k*2*numpy.pi)/L
@@ -65,29 +74,40 @@ spin: spin of the basis function (-1 for a down electron, +1 for an up electron)
         return self.kinetic < other.kinetic
 
 def total_momentum(basis_iterable):
-    '''Returns the total momentum  of the basis functions in basis_iterable.
+    '''Calculate the total momentum of a many-particle basis function.
 
-The return value is in units of 2*pi/L.
+:type basis_iterable: iterable of :class:`BasisFn` objects
+:param basis_iterable: many-particle basis function
 
-In:
-
-basis_iterable is an iterable consisting solely of BasisFn objects.
+:returns: the total momentum (in units of 2*pi/L) of the basis functions in basis_iterable.
 '''
     return sum(bfn.k for bfn in basis_iterable)
 
 #--- System ---
 
 class UEG:
-    def __init__(self, nel, nalpha, nbeta, rs):
-        '''Create a representation of a 3D uniform electron gas.
+    '''Create a representation of a 3D uniform electron gas.
 
-In:
+:param integer nel: number of electrons
+:param integer nalpha: number of alpha (spin-up) electrons
+:param integer nbeta: number of beta (spin-down) electrons
+:param float rs: electronic density
 
-nel: number of electrons
-nalpha: number of alpha (spin-up) electrons
-nbeta: number of beta (spin-down) electrons
-rs: density
+.. attribute:: nel, nalpha, nbeta, rs
+
+    see parameter list
+
+.. attribute:: L
+
+    length of the cubic simulation cell containing nel electrons
+    at the density of rs
+
+.. attribute:: Omega
+
+    volume of the cubic simulation cell containing nel electrons at the density
+    of rs
 '''
+    def __init__(self, nel, nalpha, nbeta, rs):
         self.nel = nel
         self.nalpha = nalpha
         self.nbeta = nbeta
@@ -95,19 +115,18 @@ rs: density
         self.L = self.rs*((4*numpy.pi*self.nel)/3)**(1.0/3.0)
         self.Omega = self.L**3
     def coulomb_int(self, q):
-        '''Returns the Coulomb integral < k k' | k+q k'-q >.
+        '''Calculate the Coulomb integral < k k' | k+q k'-q >.
 
-The integral:
+The Coulomb integral:
 
-< k k' | k+q k'-q > = 4*pi/ (Omega q^2)
+    < k k' | k+q k'-q > = 4\pi/ (\Omega q^2)
 
-where Omega is the volume of the simulation cell, is independent of k and k'
-and hence only q is required.
+where Omega is the volume of the simulation cell, is independent of  the
+wavevectors k and k' and hence only the q vector is required.
 
-In:
-
-q: momentum transfer vector.
-        '''
+:type q: numpy.array
+:param q: momentum transfer vector (absolute units)
+'''
         return 4*numpy.pi / (self.Omega * numpy.dot(q, q))
 
 #--- Basis set ---
@@ -115,20 +134,20 @@ q: momentum transfer vector.
 def init_basis(sys, cutoff, sym):
     '''Create single-particle and the many-particle bases.
 
-In:
+:type sys: :class:`UEG`
+:param sys: UEG system to be studied.
 
-sys: UEG object defining the system.
-cutoff: energy cutoff (in units of (2*pi/L)^2) defining the single-particle
-        basis.  Only single-particle basis functions with a kinetic energy
-        equal to or less than the cutoff are considered.
-sym: wavevector (in units of 2*pi/L) representing the desired symmetry.  Only
-     Hartree products and determinants of this symmetry are returned.
+:param float cutoff: energy cutoff (in units of (2*pi/L)^2) defining the single-particle basis.  Only single-particle basis functions with a kinetic energy equal to or less than the cutoff are considered.
 
-Returns:
+:type sym: numpy.array
+:param sym: integer vector defining the wavevector (in units of 2*pi/L) representing the desired symmetry.  Only Hartree products and determinants of this symmetry are returned.
+
+:returns: (basis_fns, hartree_products, determinants)
+
+# TODO
 
 basis_fns: tuple of BasisFn objects, ie the single-particle basis set.
-hartree_products: tuple containing Hartree products formed from basis_fns.
-                  Warning: this can be large.
+hartree_products: tuple containing Hartree products formed from basis_fns.  Warning: this can be large.
 determinants: tuple containing Slater determinants formed from basis_fns.
 
 A determinant and a Hartree product are both represented as tuples of BasisFn
@@ -180,56 +199,77 @@ class UEGHamiltonian:
 
 The relevant subclass which provides the appropriate matrix elements should be
 used.
+
+:type sys: :class:`UEG`
+:param sys: UEG system to be studied.
+:type basis: iterable of iterables of :class:`ueg_fci.BasisFn`
+:param basis: set of many-particle basis functions
+
+.. attribute:: sys, basis
+
+    see parameter list
+
+.. attribute:: nbasis
+
+    number of many-particle basis functions (i.e. length basis)
+
+.. attribute:: hamil
+
+    Hamiltonian matrix in the basis set of the many-particle basis functions
+
+.. note::
+
+    This is a base class; the basis must be appropriate to the actual subclass
+    used specific to the required underlying many-particle basis set.
 '''
     def __init__(self, sys, basis):
-        '''Create a Hamiltonian matrix.
-
-In:
-
-sys: UEG object defining the system.
-basis: iterable containing the many-particle basis functions.
-
-This is a base class; the basis must be appropriate to the actual subclass
-used.
-'''
 
         self.sys = sys
-        self.nbasis = len(basis)
+        self.basis = basis
+        self.nbasis = len(self.basis)
         self.hamil = numpy.zeros([self.nbasis, self.nbasis])
 
         # Construct Hamiltonain
         for i in range(self.nbasis):
-            bi = basis[i]
+            bi = self.basis[i]
             self.hamil[i][i] = self.mat_fn0(bi)
             for j in range(i+1, self.nbasis):
-                bj = basis[j]
+                bj = self.basis[j]
                 self.hamil[i][j] = self.mat_fn2(bi, bj)
                 self.hamil[j][i] = self.hamil[i][j]
 
-    def mat_fn0(self, bi):
+    def mat_fn0(self, b):
         '''Calculate diagonal matrix element, <bi|H|bi>.
 
-In:
+.. warning::
 
-bi: iterable of BasisFn objects representating a many-particle basis function
+    Virtual member.  Must be appropriately implemented in a subclass.
+
+:type b: iterable of :class:`BasisFn` objects
+:param b: a many-particle basis function.
 '''
 
         err = 'Should not be calling the base matrix element functions'
         raise RuntimeError(err)
 
-    def mat_fn2(self, bi, bj):
-        '''Calculate an off-diagonal matrix element, <bi|H|bj>.
+    def mat_fn2(self, b1, b2):
+        '''Calculate an off-diagonal matrix element, <b1|H|b2>.
 
-In:
+.. warning::
 
-bi, bj: iterable of BasisFn objects representating a many-particle basis function.
+    Virtual member.  Must be appropriately implemented in a subclass.
+
+:type b1: iterable of :class:`BasisFn` objects
+:param b1: a many-particle basis function
+:type b2: iterable of :class:`BasisFn` objects
+:param b2: a many-particle basis function
 '''
 
         err = 'Should not be calling the base matrix element functions'
         raise RuntimeError(err)
 
     def eigvalsh(self):
-        '''Returns the eigenvalues of the Hamiltonian matrix.'''
+        ''':returns: the eigenvalues of the Hamiltonian matrix.'''
 
         return numpy.linalg.eigvalsh(self.hamil)
 
@@ -258,14 +298,18 @@ into the greater sign-problem matrix discussed by Spencer, Blunt and Foulkes.
 #--- Hamiltonian in a Hartree product basis ---
 
 class HartreeUEGHamiltonian(UEGHamiltonian):
-    '''Hamiltonian class for the UEG in a Hartree product basis.'''
-    def mat_fn0(self, prod):
-        '''Calculate a diagonal matrix element, <prod|H|prod>.
+    '''Hamiltonian class for the UEG in a Hartree product basis.
 
-In:
-
-prod: iterable of BasisFn objects representating a Hartree product basis function.
+The Hartree product basis is the set of all possible permutations of electrons
+in the single-particle basis set.  It is sufficient (and cheaper) to consider
+one spin and momentum block of the Hamiltonian at a time.
 '''
+    def mat_fn0(self, p):
+#        '''Calculate a diagonal matrix element, <p|H|p>.
+#
+#:type p: iterable of :class:`BasisFn` objects
+#:param p: a Hartree product basis function
+#'''
         # <p|H|p> = \sum_i <i|T|i>
 
         # Kinetic operator is diagonal in a plane-wave basis.
@@ -275,16 +319,17 @@ prod: iterable of BasisFn objects representating a Hartree product basis functio
         # interactions.
 
         hmatel = 0
-        for (indx, bi) in enumerate(prod):
+        for (indx, bi) in enumerate(p):
             hmatel += bi.kinetic
         return hmatel
 
-    def mat_fn2(self, prod1, prod2):
-        '''Calculate an off-diagonal matrix element, <prod1|H|prod2>.
+    def mat_fn2(self, p1, p2):
+        '''Calculate an off-diagonal matrix element, <p1|H|p2>.
 
-In:
-
-prod1, prod2: iterable of BasisFn objects representating a Hartree product basis function.
+:type p1: iterable of :class:`BasisFn` objects
+:param p1: a Hartree product basis function
+:type p2: iterable of :class:`BasisFn` objects
+:param p2: a many-particle basis function
 '''
         # <p|H|p'> = <ij|U|ab>
 
@@ -299,10 +344,10 @@ prod1, prod2: iterable of BasisFn objects representating a Hartree product basis
 
         from_1 = []
         to_2 = []
-        for i in range(len(prod1)):
-            if prod1[i] != prod2[i]:
-                from_1.append(prod1[i])
-                to_2.append(prod2[i])
+        for i in range(len(p1)):
+            if p1[i] != p2[i]:
+                from_1.append(p1[i])
+                to_2.append(p2[i])
 
         hmatel = 0
         if len(from_1) == 2:
@@ -315,13 +360,17 @@ prod1, prod2: iterable of BasisFn objects representating a Hartree product basis
 #--- Hamiltonian in a Slater determinant basis ---
 
 class DeterminantUEGHamiltonian(UEGHamiltonian):
-    '''Hamiltonian class for the UEG in a Slater determinant basis.'''
-    def mat_fn0(self, det):
-        '''Calculate a diagonal matrix element, <det|H|det>.
+    '''Hamiltonian class for the UEG in a Slater determinant basis.
 
-In:
+The Slater determinant basis is the set of all possible combinations of
+electrons in the single-particle basis set.  It is sufficient (and cheaper) to
+consider one spin and momentum block of the Hamiltonian at a time.
+'''
+    def mat_fn0(self, d):
+        '''Calculate a diagonal matrix element, <d|H|d>.
 
-det: iterable of BasisFn objects representating a Slater determinant basis function.
+:type d: iterable of :class:`BasisFn` objects
+:param d: a Slater determinant basis function
 '''
         # <D|H|D> = \sum_i <i|T|i> + \sum_{i<j} <ij|ij> - <ij|ji>
 
@@ -330,7 +379,7 @@ det: iterable of BasisFn objects representating a Slater determinant basis funct
         # interactions.
 
         hmatel = 0
-        for (indx, bi) in enumerate(det):
+        for (indx, bi) in enumerate(d):
             hmatel += bi.kinetic
             for bj in det[indx+1:]:
                 if bi.spin == bj.spin:
@@ -339,12 +388,15 @@ det: iterable of BasisFn objects representating a Slater determinant basis funct
 
         return hmatel
 
-    def mat_fn2(self, det1, det2):
-        '''Calculate an off-diagonal matrix element, <det1|H|det2>.
+    def mat_fn2(self, d1, d2):
+        '''Calculate an off-diagonal matrix element, <d1|H|d2>.
 
-In:
+:type d1: iterable of :class:`BasisFn` objects
+:param d1: a Slater determinant basis function
+:type d2: iterable of :class:`BasisFn` objects
+:param d2: a Slater determinant basis function
 
-det1, det2: iterable of BasisFn objects representating a Slater determinant basis function.
+:returns: <d1|H|d2>
 '''
         # <D|H|D'> = 1/2 <ij|ij> - <ij|ji>
         # if |D> and |D'> are related by a double excitation, assuming |D> and
@@ -352,26 +404,26 @@ det1, det2: iterable of BasisFn objects representating a Slater determinant basi
 
         # Get excitation.
         # Also work out the number of permutations required to line up the two
-        # determinants.  We do this by counting the number of permutations
+        # derminants.  We do this by counting the number of permutations
         # required to move the spin-orbitals to the 'end' of each determinant.
         from_1 = []
         to_2 = []
         nperm = 0
         nfound = 0
-        for (indx, basis) in enumerate(det1):
-            if basis not in det2:
+        for (indx, basis) in enumerate(d1):
+            if basis not in d2:
                 from_1.append(basis)
                 # Number of permutations required to move basis fn to the end.
                 # Have to take into account if we've already moved one orbital
                 # to the end.
-                nperm += len(det1) - indx - 1 + nfound
+                nperm += len(d1) - indx - 1 + nfound
                 nfound += 1
         nfound = 0
         # Ditto for second determinant.
-        for (indx, basis) in enumerate(det2):
-            if basis not in det1:
+        for (indx, basis) in enumerate(d2):
+            if basis not in d1:
                 to_2.append(basis)
-                nperm += len(det2) - indx - 1 + nfound
+                nperm += len(d2) - indx - 1 + nfound
                 nfound += 1
 
         hmatel = 0
@@ -392,13 +444,18 @@ det1, det2: iterable of BasisFn objects representating a Slater determinant basi
 #--- Hamiltonian in a permanent basis ---
 
 class PermanentUEGHamiltonian(UEGHamiltonian):
-    '''Hamiltonian class for the UEG in a permanent basis.'''
-    def mat_fn0(self, perm):
-        '''Calculate a diagonal matrix element, <perm|H|perm>.
+    '''Hamiltonian class for the UEG in a permanent basis.
 
-In:
+The permanent basis is the set of all possible combinations of
+electrons in the single-particle basis set, and hence is identical to the
+Slater determinant basis.  It is sufficient (and cheaper) to consider one spin
+and momentum block of the Hamiltonian at a time.
+'''
+    def mat_fn0(self, p):
+        '''Calculate a diagonal matrix element, <p|H|p>.
 
-perm: iterable of BasisFn objects representating a permanent basis function.
+:type p: iterable of :class:`BasisFn` objects
+:param p: a permanent basis function
 '''
         # <D|H|D> = \sum_i <i|T|i> + \sum_{i<j} <ij|ij> + <ij|ji>
 
@@ -416,12 +473,13 @@ perm: iterable of BasisFn objects representating a permanent basis function.
 
         return hmatel
 
-    def mat_fn2(self, perm1, perm2):
-        '''Calculate an off-diagonal matrix element, <perm1|H|perm2>.
+    def mat_fn2(self, p1, p2):
+        '''Calculate an off-diagonal matrix element, <p1|H|p2>.
 
-In:
-
-perm1, perm2: iterable of BasisFn objects representating a permanent basis function.
+:type p1: iterable of :class:`BasisFn` objects
+:param p1: a permanent basis function
+:type p2: iterable of :class:`BasisFn` objects
+:param p2: a permanent basis function
 '''
         # <D|H|D'> = 1/2 <ij|ij> + <ij|ji>
         # if |D> and |D'> are related by a double excitation, assuming |D> and
@@ -433,11 +491,11 @@ perm1, perm2: iterable of BasisFn objects representating a permanent basis funct
         # required.
         from_1 = []
         to_2 = []
-        for (indx, basis) in enumerate(perm1):
-            if basis not in perm2:
+        for (indx, basis) in enumerate(p1):
+            if basis not in p2:
                 from_1.append(basis)
-        for (indx, basis) in enumerate(perm2):
-            if basis not in perm1:
+        for (indx, basis) in enumerate(p2):
+            if basis not in p1:
                 to_2.append(basis)
 
         hmatel = 0

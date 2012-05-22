@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-'''Run script.'''
+'''Script to investigate the sign problem in a UEG system in various bases.
 
-# Example use of ueg_fci module.
+Execute to calculate and print out the lowest eigenvalues of Hamiltonian
+matrices (and those related to the FCIQMC sign problem) for a small UEG
+system using the ueg_fci module.
+'''
 
 import numpy
 import ueg_fci
@@ -9,13 +12,14 @@ import ueg_fci
 def worker(label, sys, basis, Hamil, nprint):
     '''Helper function to construct and diagonalise matrices related to the sign problem.
 
-In:
-
-label: label of the many-particle basis function used.
-sys: object describing the desired system; passed to Hamil.
-basis: iterable of many-particle basis functions.
-Hamil: appropriate subclass of the UEGHamiltonian class for the basis provided.
-nprint: number of eigenvalues to print out.
+:param string label: label of the many-particle basis function used
+:type sys: :class:`ueg_fci.UEG`
+:param sys: desired UEG system; passed to Hamil
+:type basis: iterable of iterables of :class:`ueg_fci.BasisFn`
+:param basis: set of many-particle basis functions
+:type Hamil: :class:`ueg_fci.UEGHamiltonian` subclass
+:param Hamil: appropriate Hamiltonian for the basis provided
+:param integer nprint: number of eigenvalues to print out
 '''
     print("Constructing <%s'|H|%s>..." % (2*(label,)))
     hamil = Hamil(sys, basis)
@@ -53,6 +57,7 @@ if __name__ == '__main__':
 
     # Construct relevant matrices and diagonalise them.
     worker('D', sys, determinants, ueg_fci.DeterminantUEGHamiltonian, 10)
+    # Permanent basis is identical to the determinant basis.
     worker('P', sys, determinants, ueg_fci.PermanentUEGHamiltonian, 10)
     # This is slow and uses lots of memory due to the sheer size of the Hartree product basis.
     worker('h', sys, hartree_products, ueg_fci.HartreeUEGHamiltonian, 100)
