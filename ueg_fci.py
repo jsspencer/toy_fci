@@ -52,12 +52,10 @@ import pprint
 #--- Basis functions ---
 
 class BasisFn:
-    '''Basis function with wavevector 2*pi*(i,j,k)/L of the desired spin.
-
-TODO: maths
+    '''Basis function with wavevector $2\pi(i,j,k)^{T}/L$ of the desired spin.
 
 :param integer i, j, k: integer labels (quantum numbers) of the wavevector
-:param float L: dimension of the cubic simulation cell of size LxLxL
+:param float L: dimension of the cubic simulation cell of size $L\\times L \\times L$
 :param integer spin: spin of the basis function (-1 for a down electron, +1 for an up electron)
 '''
     def __init__(self, i, j, k, L, spin):
@@ -79,7 +77,7 @@ def total_momentum(basis_iterable):
 :type basis_iterable: iterable of :class:`BasisFn` objects
 :param basis_iterable: many-particle basis function
 
-:returns: the total momentum (in units of 2*pi/L) of the basis functions in basis_iterable.
+:returns: the total momentum, in units of $2\pi/L$, of the basis functions in basis_iterable
 '''
     return sum(bfn.k for bfn in basis_iterable)
 
@@ -92,40 +90,36 @@ class UEG:
 :param integer nalpha: number of alpha (spin-up) electrons
 :param integer nbeta: number of beta (spin-down) electrons
 :param float rs: electronic density
-
-.. attribute:: nel, nalpha, nbeta, rs
-
-    see parameter list
-
-.. attribute:: L
-
-    length of the cubic simulation cell containing nel electrons
-    at the density of rs
-
-.. attribute:: Omega
-
-    volume of the cubic simulation cell containing nel electrons at the density
-    of rs
 '''
     def __init__(self, nel, nalpha, nbeta, rs):
+        #: number of electrons
         self.nel = nel
+        #: number of alpha (spin-up) electrons
         self.nalpha = nalpha
+        #: number of beta (spin-down) electrons
         self.nbeta = nbeta
+        #: electronic density
         self.rs = rs
+        #: length of the cubic simulation cell containing nel electrons
+        #: at the density of rs
         self.L = self.rs*((4*numpy.pi*self.nel)/3)**(1.0/3.0)
+        #: volume of the cubic simulation cell containing nel electrons at the density
+        #: of rs
         self.Omega = self.L**3
     def coulomb_int(self, q):
-        '''Calculate the Coulomb integral < k k' | k+q k'-q >.
+        '''Calculate the Coulomb integral $\langle  k k' | k+q k'-q  \\rangle$.
 
 The Coulomb integral:
 
-    < k k' | k+q k'-q > = 4\pi/ (\Omega q^2)
+.. math::
+
+    \langle k k' | k+q k'-q \\rangle = 4\pi/ (\Omega q^2)
 
 where Omega is the volume of the simulation cell, is independent of  the
-wavevectors k and k' and hence only the q vector is required.
+wavevectors $k$ and $k'$ and hence only the $q$ vector is required.
 
 :type q: numpy.array
-:param q: momentum transfer vector (absolute units)
+:param q: momentum transfer vector (in absolute units)
 '''
         return 4*numpy.pi / (self.Omega * numpy.dot(q, q))
 
@@ -137,10 +131,10 @@ def init_basis(sys, cutoff, sym):
 :type sys: :class:`UEG`
 :param sys: UEG system to be studied.
 
-:param float cutoff: energy cutoff (in units of (2*pi/L)^2) defining the single-particle basis.  Only single-particle basis functions with a kinetic energy equal to or less than the cutoff are considered.
+:param float cutoff: energy cutoff, in units of $(2\pi/L)^2$, defining the single-particle basis.  Only single-particle basis functions with a kinetic energy equal to or less than the cutoff are considered.
 
 :type sym: numpy.array
-:param sym: integer vector defining the wavevector (in units of 2*pi/L) representing the desired symmetry.  Only Hartree products and determinants of this symmetry are returned.
+:param sym: integer vector defining the wavevector, in units of $2\pi/L$, representing the desired symmetry.  Only Hartree products and determinants of this symmetry are returned.
 
 :returns: (basis_fns, hartree_products, determinants)
 
@@ -201,21 +195,9 @@ The relevant subclass which provides the appropriate matrix elements should be
 used.
 
 :type sys: :class:`UEG`
-:param sys: UEG system to be studied.
+:param sys: UEG system to be studied
 :type basis: iterable of iterables of :class:`ueg_fci.BasisFn`
 :param basis: set of many-particle basis functions
-
-.. attribute:: sys, basis
-
-    see parameter list
-
-.. attribute:: nbasis
-
-    number of many-particle basis functions (i.e. length basis)
-
-.. attribute:: hamil
-
-    Hamiltonian matrix in the basis set of the many-particle basis functions
 
 .. note::
 
@@ -224,9 +206,13 @@ used.
 '''
     def __init__(self, sys, basis):
 
+        #: UEG system to be studied
         self.sys = sys
+        #: set of many-particle basis functions
         self.basis = basis
+        #: number of many-particle basis functions (i.e. length basis)
         self.nbasis = len(self.basis)
+        #: Hamiltonian matrix in the basis set of the many-particle basis functions
         self.hamil = numpy.zeros([self.nbasis, self.nbasis])
 
         # Construct Hamiltonain
@@ -239,7 +225,7 @@ used.
                 self.hamil[j][i] = self.hamil[i][j]
 
     def mat_fn0(self, b):
-        '''Calculate diagonal matrix element, <bi|H|bi>.
+        '''Calculate diagonal matrix element, $\langle b|H|b \\rangle$.
 
 .. warning::
 
@@ -253,7 +239,7 @@ used.
         raise RuntimeError(err)
 
     def mat_fn2(self, b1, b2):
-        '''Calculate an off-diagonal matrix element, <b1|H|b2>.
+        '''Calculate an off-diagonal matrix element, $\langle b_1|H|b_2 \\rangle$.
 
 .. warning::
 
@@ -305,11 +291,11 @@ in the single-particle basis set.  It is sufficient (and cheaper) to consider
 one spin and momentum block of the Hamiltonian at a time.
 '''
     def mat_fn0(self, p):
-#        '''Calculate a diagonal matrix element, <p|H|p>.
-#
-#:type p: iterable of :class:`BasisFn` objects
-#:param p: a Hartree product basis function
-#'''
+        '''Calculate a diagonal matrix element, $\langle p|H|p \\rangle$.
+
+:type p: iterable of :class:`BasisFn` objects
+:param p: a Hartree product basis function
+'''
         # <p|H|p> = \sum_i <i|T|i>
 
         # Kinetic operator is diagonal in a plane-wave basis.
@@ -324,7 +310,7 @@ one spin and momentum block of the Hamiltonian at a time.
         return hmatel
 
     def mat_fn2(self, p1, p2):
-        '''Calculate an off-diagonal matrix element, <p1|H|p2>.
+        '''Calculate an off-diagonal matrix element, $\langle p_1|H|p_2 \\rangle$.
 
 :type p1: iterable of :class:`BasisFn` objects
 :param p1: a Hartree product basis function
@@ -367,7 +353,7 @@ electrons in the single-particle basis set.  It is sufficient (and cheaper) to
 consider one spin and momentum block of the Hamiltonian at a time.
 '''
     def mat_fn0(self, d):
-        '''Calculate a diagonal matrix element, <d|H|d>.
+        '''Calculate a diagonal matrix element, $\langle d|H|d \\rangle$.
 
 :type d: iterable of :class:`BasisFn` objects
 :param d: a Slater determinant basis function
@@ -389,7 +375,7 @@ consider one spin and momentum block of the Hamiltonian at a time.
         return hmatel
 
     def mat_fn2(self, d1, d2):
-        '''Calculate an off-diagonal matrix element, <d1|H|d2>.
+        '''Calculate an off-diagonal matrix element, $\langle d_1|H|d_2 \\rangle$.
 
 :type d1: iterable of :class:`BasisFn` objects
 :param d1: a Slater determinant basis function
@@ -452,7 +438,7 @@ Slater determinant basis.  It is sufficient (and cheaper) to consider one spin
 and momentum block of the Hamiltonian at a time.
 '''
     def mat_fn0(self, p):
-        '''Calculate a diagonal matrix element, <p|H|p>.
+        '''Calculate a diagonal matrix element, $\langle p|H|p \\rangle$.
 
 :type p: iterable of :class:`BasisFn` objects
 :param p: a permanent basis function
@@ -474,7 +460,7 @@ and momentum block of the Hamiltonian at a time.
         return hmatel
 
     def mat_fn2(self, p1, p2):
-        '''Calculate an off-diagonal matrix element, <p1|H|p2>.
+        '''Calculate an off-diagonal matrix element, $\langle p_1|H|p_2 \\rangle$.
 
 :type p1: iterable of :class:`BasisFn` objects
 :param p1: a permanent basis function
