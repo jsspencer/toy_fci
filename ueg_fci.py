@@ -107,15 +107,15 @@ class UEG:
         #: of rs
         self.Omega = self.L**3
     def coulomb_int(self, q):
-        '''Calculate the Coulomb integral $\langle  k k' | k+q k'-q  \\rangle$.
+        '''Calculate the Coulomb integral $\langle  k \; k' | k+q \; k'-q  \\rangle$.
 
 The Coulomb integral:
 
 .. math::
 
-    \langle k k' | k+q k'-q \\rangle = 4\pi/ (\Omega q^2)
+    \langle k \; k' | k+q \; k'-q \\rangle = \\frac{4\pi}{\Omega q^2}
 
-where Omega is the volume of the simulation cell, is independent of  the
+where $\Omega$ is the volume of the simulation cell, is independent of  the
 wavevectors $k$ and $k'$ and hence only the $q$ vector is required.
 
 :type q: numpy.array
