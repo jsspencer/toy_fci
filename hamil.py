@@ -25,6 +25,8 @@ used.
     matrix element functions
 :type basis: iterable of iterables of single-particle basis functions
 :param basis: set of many-particle basis functions
+:param float tau: timestep by which to propogate psip distributions in
+    imaginary time
 
 .. note::
 
@@ -32,9 +34,9 @@ used.
     used and are specific to the required system and underlying many-particle
     basis set.
 '''
-    def __init__(self, sys, basis):
+    def __init__(self, sys, basis, tau=0.1):
 
-        #: UEG system to be studied
+        #: system to be studied
         self.sys = sys
         #: set of many-particle basis functions
         self.basis = basis
@@ -42,6 +44,8 @@ used.
         self.nbasis = len(self.basis)
         #: Hamiltonian matrix in the basis set of the many-particle basis functions
         self.hamil = numpy.zeros([self.nbasis, self.nbasis])
+        #: timestep by which to propogate psip distributions in imaginary time
+        self.tau = tau
 
         # Construct Hamiltonain
         for i in range(self.nbasis):
@@ -51,6 +55,13 @@ used.
                 bj = self.basis[j]
                 self.hamil[i][j] = self.mat_fn_offdiag(bi, bj)
                 self.hamil[j][i] = self.hamil[i][j]
+
+        propogator = numpy.identity(self.nbasis) - self.tau*self.hamil
+        #: positive propogator matrix, `T^+` where `T = 1 - \tau H = T^+ - T^-` and `T^+` elements are non-negative.
+        self.pos_propogator = (propogator > 0) * propogator
+        #: negative propogator matrix, `T^-` where `T = 1 - \tau H = T^+ - T^-` and `T^-` elements are non-negative.
+        self.neg_propogator = -( (propogator < 0) * propogator)
+
 
     def mat_fn_diag(self, b):
         '''Calculate a diagonal Hamiltonian matrix element.
@@ -77,9 +88,9 @@ used.
     Virtual member.  Must be appropriately implemented in a subclass.
 
 :type b1: iterable of single-particle basis functions
-:param b1: a many-particle basis function, `|b_1\\rangle
+:param b1: a many-particle basis function, `|b_1\\rangle`
 :type b2: iterable of single-particle basis functions
-:param b2: a many-particle basis function, `|b_2\\rangle
+:param b2: a many-particle basis function, `|b_2\\rangle`
 
 :rtype: float
 :returns: `\langle b_1|H|b_2 \\rangle`.
@@ -119,6 +130,23 @@ into the greater sign-problem matrix discussed by Spencer, Blunt and Foulkes.
 
         for i in range(self.nbasis):
             self.hamil[i][i] = -abs(self.hamil[i][i])
+
+    def propogate(self, pos_psips, neg_psips):
+        '''Propogates a psip (psi-particle) distribution for a single timestep.
+
+:type pos_psips: 1D array or list (length nbasis)
+:param pos_psips: distribution of positive psips at time `t = n\\tau` on the many-fermion basis set.
+:type neg_psips: 1D array or list (length nbasis)
+:param neg_psips: distribution of negative psips at time `t = n\\tau` on the many-fermion basis set.
+
+:returns: (next_pos_psips, next_neg_psips) --- positive and negative psip distributions at time `t=(n+1)\\tau`.
+'''
+
+        next_pos_psips = numpy.dot(self.pos_propogator, pos_psips) + numpy.dot(self.neg_propogator, neg_psips)
+        next_neg_psips = numpy.dot(self.pos_propogator, neg_psips) + numpy.dot(self.neg_propogator, pos_psips)
+
+        return (next_pos_psips, next_neg_psips)
+
 
 #--- Excitations between many-particle basis functions ---
 
