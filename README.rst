@@ -14,6 +14,10 @@ Note that no attempt is made to tackle finite size effects.
 
 Requires python 2.6 or later and numpy.  All code is compatible with python 3.
 
+``hamil.py``
+    Python module containing a base Hamiltonian class and generic functions
+    for performing finding excitations connecting pairs of many-particle basis
+    functions.
 ``ueg_fci.py``
     Python module containing classes and functions for performing FCI
     calculations on the uniform electron gas using Slater determinants,
@@ -37,4 +41,4 @@ James Spencer, Imperial College London.
 License
 -------
 
-Modified BSD License; see LICENSE or ueg_fci.py for more details.
+Modified BSD License; see LICENSE for more details.

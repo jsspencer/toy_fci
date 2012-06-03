@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-'''Script to investigate the sign problem in a UEG system in various bases.
+'''
+ueg_sign_problem
+================
+
+Script to investigate the sign problem in a UEG system in various bases.
 
 Execute to calculate and print out the lowest eigenvalues of Hamiltonian
 matrices (and those related to the FCIQMC sign problem) for a small UEG
@@ -50,8 +54,13 @@ if __name__ == '__main__':
 
     sys = ueg_fci.UEG(nel, nalpha, nbeta, rs)
 
+    title = 'FCIQMC sign problem in the UEG'
+    print(title)
+    print('='*len(title))
+    print('')
+
     print('Constructing the basis...')
-    (basis_fns, hartree_products, determinants) = ueg_fci.init_basis(sys, cutoff, gamma)
+    (basis_fns, hartree_products, determinants) = ueg_fci.init_ueg_basis(sys, cutoff, gamma)
     print('Basis set size: %i spin-orbitals, %i determinants/permanents, ' '%i Hartree products.' 
             % (len(basis_fns), len(determinants), len(hartree_products)))
 
