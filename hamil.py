@@ -88,8 +88,13 @@ used.
         err = 'Should not be calling the base matrix element functions'
         raise RuntimeError(err)
 
+    def eigh(self):
+        ''':returns: (eigenvalues, eigenvectors) of the Hamiltonian matrix.'''
+
+        return numpy.linalg.eigh(self.hamil)
+
     def eigvalsh(self):
-        ''':returns: the eigenvalues of the Hamiltonian matrix.'''
+        ''':returns: eigenvalues of the Hamiltonian matrix.'''
 
         return numpy.linalg.eigvalsh(self.hamil)
 
