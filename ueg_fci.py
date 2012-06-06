@@ -136,16 +136,16 @@ def init_basis(sys, cutoff, sym):
 :type sym: numpy.array
 :param sym: integer vector defining the wavevector, in units of `2\pi/L`, representing the desired symmetry.  Only Hartree products and determinants of this symmetry are returned.
 
-:returns: (basis_fns, hartree_products, determinants)
+:returns: (basis_fns, hartree_products, determinants) where:
 
-# TODO
+    basis_fns
+        tuple of relevant :class:`BasisFn` objects, ie the single-particle basis set.
+    hartree_products
+        tuple containing all Hartree products formed from basis_fns.
+    determinants
+        tuple containing all Slater determinants formed from basis_fns.
 
-basis_fns: tuple of BasisFn objects, ie the single-particle basis set.
-hartree_products: tuple containing Hartree products formed from basis_fns.  Warning: this can be large.
-determinants: tuple containing Slater determinants formed from basis_fns.
-
-A determinant and a Hartree product are both represented as tuples of BasisFn
-objects.
+Determinants and Hartree products are represented as tuples of :class:`BasisFn` objects.
 '''
 
     # Single particle basis within the desired energy cutoff.
