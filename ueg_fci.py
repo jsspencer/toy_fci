@@ -344,7 +344,7 @@ and momentum block of the Hamiltonian at a time.
         '''Calculate an off-diagonal Hamiltonian matrix element.
 
 :type p1: iterable of :class:`BasisFn` objects
-:param p1: a permanent basis function, |p1\\rangle`
+:param p1: a permanent basis function, `|p1\\rangle`
 :type p2: iterable of :class:`BasisFn` objects
 :param p2: a permanent basis function, `|p2\\rangle`
 

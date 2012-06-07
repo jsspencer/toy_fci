@@ -290,6 +290,8 @@ def print_wfn(basis, pos, neg):
 def print_two_fermion_wfn(basis, pos, neg, L):
     '''Print out a stochastic wavefunction represented on a basis.
 
+Assumes there are two fermions in the simulation cell.
+
 :type basis: iterable of iterable of :class:`LatticeSite` objects
 :param basis: many-fermion basis
 :type pos: 1D vector of length basis
@@ -297,8 +299,6 @@ def print_two_fermion_wfn(basis, pos, neg, L):
 :type neg: 1D vector of length basis
 :param neg: weight of negative psips on each basis function
 :param integer L: dimension of lattice cell.
-
-Assumes there are two fermions in the simulation cell.
 '''
 
     nbasis = len(basis)

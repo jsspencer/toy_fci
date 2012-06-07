@@ -3,10 +3,10 @@
 lattice_propogation
 ===================
 
-Use the FCIQMC algorithm without annihilation to propogate positive and
-negative psips using Hamiltonians defined in both Hartree product and Slater
-determinant bases for two spinless fermions on a `4\\times4` lattice with
-periodic boundary conditions.  The Hamiltonian operator is:
+Script which uses the FCIQMC algorithm without annihilation to propogate
+positive and negative psips using Hamiltonians defined in both Hartree product
+and Slater determinant bases for two spinless fermions on a `4\\times4` lattice
+with periodic boundary conditions.  The Hamiltonian operator is:
 
 .. math::
 

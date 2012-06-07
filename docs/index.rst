@@ -1,9 +1,11 @@
-ueg_fci
+toy_fci
 =======
 
-Full Configuration Interaction (FCI) method for the uniform electron gas.
+Full Configuration Interaction (FCI) method for simple quantum systems.
+Currently the uniform electron gas and a spinless lattice model are
+implemented.
 
-This is a particularly simple implementation in python: little attempt is made
+This is a particularly naive implementation in python: little attempt is made
 to conserve memory or CPU time.  Nevertheless, it is useful for small test
 calculations, in particular for investigating ideas about the sign problem in
 the Full Configuration Interaction Quantum Monte Carlo (FCIQMC) method
@@ -16,7 +18,9 @@ Requires python 2.6 or later and numpy.  All code is compatible with python 3.
    :maxdepth: 1
 
    hamil
+   lattice_fci
    ueg_fci
+   lattice_propogation
    ueg_sign_problem
    license
 
