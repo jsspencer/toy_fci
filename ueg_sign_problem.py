@@ -82,5 +82,5 @@ if __name__ == '__main__':
     print_title('Permanent basis', '-')
     worker('P', sys, determinants, ueg_fci.PermanentUEGHamiltonian, 10)
     # This is slow and uses lots of memory due to the sheer size of the Hartree product basis.
-    #print_title('Hartree product basis', '-')
-    #worker('h', sys, hartree_products, ueg_fci.HartreeUEGHamiltonian, 100)
+    print_title('Hartree product basis', '-')
+    worker('h', sys, hartree_products, ueg_fci.HartreeUEGHamiltonian, 100)
