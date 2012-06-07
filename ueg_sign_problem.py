@@ -25,19 +25,33 @@ def worker(label, sys, basis, Hamil, nprint):
 :param Hamil: appropriate Hamiltonian for the basis provided
 :param integer nprint: number of eigenvalues to print out
 '''
-    print("Constructing <%s'|H|%s>..." % (2*(label,)))
+    def print_eigv(eigv):
+        print('# Lowest %i eigenvalues:\n#' % (len(eigv)))
+        for i in range(len(eigv)):
+            print('%3i %f' % (i+1, eigv[i]))
+        print('#')
+
+    print("# Constructing <%s'|H|%s>...\n#" % (2*(label,)))
     hamil = Hamil(sys, basis)
-    print("Diagonalising <%s'|H|%s>..." % (2*(label,)))
+    print_title("<%s'|H|%s>" % (2*(label,)), '^')
     eigval = hamil.eigvalsh()
-    print(eigval[:nprint])
-    print("Diagonalising -|<%s'|H|%s>|, |%s'> /= |%s>..." % (4*(label,)))
+    print_eigv(eigval[:nprint])
+    print_title("-|<%s'|H|%s>|, |%s'> /= |%s>" % (4*(label,)), '^')
     hamil.negabs_off_diagonal_elements()
     eigval = hamil.eigvalsh()
-    print(eigval[:nprint])
-    print("Diagonalising -|<%s'|H|%s>|..." % (2*(label,)))
+    print_eigv(eigval[:nprint])
+    print_title("-|<%s'|H|%s>|" % (2*(label,)), '^')
     hamil.negabs_diagonal_elements()
     eigval = hamil.eigvalsh()
-    print(eigval[:nprint])
+    print_eigv(eigval[:nprint])
+
+def print_title(title, under='='):
+    '''Print the underlined title.
+
+:param string title: section title to print out
+:param string under: single character used to underline the title
+'''
+    print('# %s\n# %s\n#' % (title, under*len(title)))
 
 if __name__ == '__main__':
 
@@ -54,19 +68,19 @@ if __name__ == '__main__':
 
     sys = ueg_fci.UEG(nel, nalpha, nbeta, rs)
 
-    title = 'FCIQMC sign problem in the UEG'
-    print(title)
-    print('='*len(title))
-    print('')
+    print_title('FCIQMC sign problem in the UEG', '=')
 
-    print('Constructing the basis...')
+    print_title('Basis set', '-')
     (basis_fns, hartree_products, determinants) = ueg_fci.init_ueg_basis(sys, cutoff, gamma)
-    print('Basis set size: %i spin-orbitals, %i determinants/permanents, ' '%i Hartree products.' 
+    print('# %i spin-orbitals\n# %i determinants/permanents\n# %i Hartree products\n#' 
             % (len(basis_fns), len(determinants), len(hartree_products)))
 
     # Construct relevant matrices and diagonalise them.
+    print_title('Slater determinant basis', '-')
     worker('D', sys, determinants, ueg_fci.DeterminantUEGHamiltonian, 10)
     # Permanent basis is identical to the determinant basis.
+    print_title('Permanent basis', '-')
     worker('P', sys, determinants, ueg_fci.PermanentUEGHamiltonian, 10)
     # This is slow and uses lots of memory due to the sheer size of the Hartree product basis.
-    worker('h', sys, hartree_products, ueg_fci.HartreeUEGHamiltonian, 100)
+    #print_title('Hartree product basis', '-')
+    #worker('h', sys, hartree_products, ueg_fci.HartreeUEGHamiltonian, 100)
