@@ -30,9 +30,8 @@ if __name__ == '__main__':
     tau = 0.1
 
     print('# Fermions on a Lattice')
-    print('# =====================\n')
+    print('# =====================')
     print('''#
-# 
 # Use a simple lattice Hamiltonian as an illustration of when the FCIQMC sign
 # problem is identical in both Hartree product and Slater determinant bases.
 # 
