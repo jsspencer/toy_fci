@@ -1,4 +1,4 @@
-.. automodule:: ueg_fci
+.. automodule:: hamil
     :members:
     :member-order: bysource
     :undoc-members:

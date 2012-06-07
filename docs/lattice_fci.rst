@@ -1,4 +1,4 @@
-.. automodule:: ueg_fci
+.. automodule:: lattice_fci
     :members:
     :member-order: bysource
     :undoc-members:
