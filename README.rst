@@ -33,6 +33,17 @@ Requires python 2.6 or later and numpy.  All code is compatible with python 3.
 ``ueg_sign_problem.py``
     Example script using the ueg_fci module.
 
+The results from ``lattice_propogation.py`` and ``ueg_sign_problem.py`` are used in:
+
+| The effect of quantization on the full configuration interaction quantum Monte Carlo sign problem
+| M. H. Kolodrubetz, J. S. Spencer, B. K. Clark, and W. M.C. Foulkes
+| J. Chem. Phys. 138, 024110 (2013)
+| http://dx.doi.org/10.1063/1.4773819
+|
+| Preprint (identical to published version except minor formatting, free access):
+| arXiv:1209.3044 [physics.comp-ph]
+| http://arxiv.org/abs/1209.3044
+
 Documentation
 -------------
 
